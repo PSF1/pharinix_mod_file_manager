@@ -1,0 +1,102 @@
+{
+    "meta":{
+        "name":"File manager",
+        "slugname":"pharinix_mod_file_manager",
+        "version": "1.0",
+        "autor": "Copyright (c), 2016, Pedro Pelaez (aaaaa976@gmail.com)",
+        "website": "https://github.com/PSF1/pharinix_mod_file_manager",
+        "description": "Pharinix file manager of folders with minimum data base usage. It use CRUD node types access management to access to files.",
+        "licence": "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
+    },
+    "configuration": {},
+    "booting": [],
+    "bin_paths": [
+        "bin/"
+    ],
+    "nodetypes": {
+        "file": {
+            "isfolder":{
+                "type":"boolean",
+                "iskey":false,
+                "length":0,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":false,
+                "label":"Is folder",
+                "help":"If TRUE this node is a folder, else it's a file."
+            },
+            "path":{
+                "type":"longtext",
+                "iskey":true,
+                "length":0,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"",
+                "label":"File path",
+                "help":"File path, including name."
+            },
+            "realpath":{
+                "type":"longtext",
+                "iskey":false,
+                "length":0,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"",
+                "label":"Real file path",
+                "help":"Real file path, including name."
+            },
+            "parent":{
+                "type":"file",
+                "iskey":false,
+                "length":0,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"",
+                "label":"Parent folder",
+                "help":"This field is intended to speed up searchs. It's not defined to root folders."
+            },
+            "mimetype":{
+                "type":"string",
+                "iskey":false,
+                "length":250,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"application/octet-stream",
+                "label":"Mime type",
+                "help":"The suggested mime type, usually it's given by the uploader."
+            }
+        }
+    },
+    "sql": {},
+    "install": [
+        {"delNodeField":
+            {
+                "nodetype":"file",
+                "name":"title"
+            }
+        }
+    ],
+    "uninstall": [],
+    "requirements": {
+        "pharinix": "2.01.x"
+    },
+    "platforms":[
+        "win",
+        "linux"
+    ]
+}
