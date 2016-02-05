@@ -45,10 +45,16 @@ if (!class_exists("commandPfmTests")) {
             if ($resp == null) {
                 echo self::getAlert(__('I can\'t get \'/pfm_test/\' folder'));
             } else {
-                driverCommand::run('delNode', array(
-                    'nodetype' => 'file',
-                    'nid' => $resp->getId()
-                ));
+                echo self::getSuccess(__('Ok'));
+            }
+            
+            echo self::getLegend(__('Delete empty root folder'));
+            $resp = driverFileManager::rm('/pfm_test/');
+            if (!$resp) {
+                echo self::getAlert(__('I can\'t remove \'/pfm_test/\' folder'));
+            } else if(is_dir('var/pfm_test/')) {
+                echo self::getAlert(__('Real folder of \'/pfm_test/\' it\'s not removed (\'var/pfm_test/\').'));
+            } else {
                 echo self::getSuccess(__('Ok'));
             }
             
@@ -56,10 +62,10 @@ if (!class_exists("commandPfmTests")) {
             // TODO: Delete nodes
             
             // Delete test folder
-            if (!@rmdir('var/pfm_test/')) {
-                echo self::getAlert(__('I can\'t remove \'var/pfm_test/\' folder'));
-                return;
-            }
+//            if (!@rmdir('var/pfm_test/')) {
+//                echo self::getAlert(__('I can\'t remove \'var/pfm_test/\' folder'));
+//                return;
+//            }
         }
 
         public static function getSuccess($msg) {

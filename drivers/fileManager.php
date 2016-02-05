@@ -10,6 +10,43 @@
 class driverFileManager {
     
     /**
+     * Remove a file or folder
+     * 
+     * @param string $path Virtual file or folder path
+     * @param boolean $preserve Don't delete real path
+     * 
+     * @return boolean TRUE if success
+     */
+    public static function rm($path, $preserve = false) {
+        $resp = false;
+        $file = self::getByPath($path);
+        if ($file != null) {
+            $node = driverNodes::getNodes(array(
+                'nodetype' => 'file',
+                'count' => 1,
+                'where' => '`parent` = '.$file->getId(),
+            ), false);
+            // Have it childs?
+            if ($node[0]['amount'] == 0) { // nop
+                // Remove virtual file
+                driverCommand::run('delNode', array(
+                    'nodetype' => 'file',
+                    'nid' => $file->getId()
+                ));
+                // Remove real file
+                if (!$preserve) {
+                    if ($file->isFile()) {
+                        $resp = @unlink($file->getRealpath());
+                    } else {
+                        $resp = @rmdir($file->getRealpath());
+                    }
+                }
+            }
+        }
+        return $resp;
+    }
+    
+    /**
      * Get a file or folder instance by path
      * @param string $path Virtual file or folder path
      * @return \driverFileManagerFile File or folder instance, or null if not found
@@ -111,7 +148,11 @@ class driverFileManagerFile {
     public function __construct($std = null) {
         if ($std != null) {
             if (isset($std->id)) $this->id = $std->id;
-            if (isset($std->isfolder)) $this->isfolder = $std->isfolder;
+            if (isset($std->isfolder)) {
+                $this->isfolder = $std->isfolder == '1' || 
+                                  $std->isfolder === true || 
+                                  $std->isfolder == 'true';
+            }
             if (isset($std->path)) $this->path = $std->path;
             if (isset($std->realpath)) $this->realpath = $std->realpath;
             if (isset($std->parent)) $this->parent = $std->parent;
@@ -152,7 +193,7 @@ class driverFileManagerFile {
                 'node' => $this->id
             ));
             if (isset($node[$this->id])) {
-                $this->isfolder = $node[$this->id]['isfolder'];
+                $this->isfolder = $node[$this->id]['isfolder'] == '1';
                 $this->path = $node[$this->id]['path'];
                 $this->realpath = $node[$this->id]['realpath'];
                 $this->parent = $node[$this->id]['parent'];
@@ -229,12 +270,8 @@ class driverFileManagerFile {
         return $this->id;
     }
 
-    public function isFolder() {
-        return $this->isFolder();
-    }
-    
     public function isFile() {
-        return !$this->isFolder();
+        return $this->isfolder == false;
     }
     
     public function getIsfolder() {
