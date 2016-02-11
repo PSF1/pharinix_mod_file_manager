@@ -123,7 +123,7 @@ class driverFileManagerFile {
     /**
      * @var boolean Is a folder? 
      */
-    protected $isfolder = false;
+    protected $_isfolder = false;
     /**
      * @var string File system path 
      */
@@ -149,7 +149,7 @@ class driverFileManagerFile {
         if ($std != null) {
             if (isset($std->id)) $this->id = $std->id;
             if (isset($std->isfolder)) {
-                $this->isfolder = $std->isfolder == '1' || 
+                $this->_isfolder = $std->isfolder == '1' || 
                                   $std->isfolder === true || 
                                   $std->isfolder == 'true';
             }
@@ -170,7 +170,7 @@ class driverFileManagerFile {
             $resp = driverCommand::run('updateNode', array(
                 'nodetype' => 'file',
                 'nid' => $this->id,
-                'isfolder' => $this->isfolder,
+                'isfolder' => $this->_isfolder,
                 'path' => $this->path,
                 'realpath' => $this->realpath,
                 'parent' => $this->parent,
@@ -193,7 +193,7 @@ class driverFileManagerFile {
                 'node' => $this->id
             ));
             if (isset($node[$this->id])) {
-                $this->isfolder = $node[$this->id]['isfolder'] == '1';
+                $this->_isfolder = $node[$this->id]['isfolder'] == '1';
                 $this->path = $node[$this->id]['path'];
                 $this->realpath = $node[$this->id]['realpath'];
                 $this->parent = $node[$this->id]['parent'];
@@ -205,6 +205,17 @@ class driverFileManagerFile {
     }
     
     // Methods
+    
+    /**
+     * Make a new folder
+     * 
+     * @see driverFileManagerFile::makeDir($name)
+     * @param string $name
+     * @return driverFileManagerFile The new folder instance
+     */
+    public function mkDir($name) {
+        return $this->makeDir($name);
+    }
     
     /**
      * Make a new folder
@@ -271,11 +282,19 @@ class driverFileManagerFile {
     }
 
     public function isFile() {
-        return $this->isfolder == false;
+        return $this->_isfolder == false;
+    }
+    
+    public function isFolder() {
+        return $this->_isfolder;
+    }
+    
+    public function isRootFolder() {
+        return $this->parent == 0;
     }
     
     public function getIsfolder() {
-        return $this->isfolder;
+        return $this->_isfolder;
     }
 
     public function getPath() {
@@ -295,7 +314,7 @@ class driverFileManagerFile {
     }
 
     public function setIsfolder($isfolder) {
-        $this->isfolder = $isfolder;
+        $this->_isfolder = $isfolder;
     }
 
     public function setPath($path) {
