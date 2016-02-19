@@ -28,19 +28,32 @@ class driverFileManager {
             ), false);
             // Have it childs?
             if ($node[0]['amount'] == 0) { // nop
-                // Remove virtual file
-                driverCommand::run('delNode', array(
-                    'nodetype' => 'file',
-                    'nid' => $file->getId()
-                ));
-                // Remove real file
-                if (!$preserve) {
-                    if ($file->isFile()) {
-                        $resp = @unlink($file->getRealpath());
-                    } else {
-                        $resp = @rmdir($file->getRealpath());
-                    }
-                }
+                $resp = self::rmFileEntity($file, $preserve);
+            }
+        }
+        return $resp;
+    }
+    
+    /**
+     * Delete a file or folder from data base and OS file system.
+     * IMPORTANT: This method don't verify childs.
+     * @param driverFileManagerFile $file Entity to delete
+     * @param boolean $preserve Erase real file or folder?
+     * @return boolean TRUE if Ok.
+     */
+    public static function rmFileEntity($file, $preserve = false) {
+        // Remove virtual file
+        driverCommand::run('delNode', array(
+            'nodetype' => 'file',
+            'nid' => $file->getId()
+        ));
+        // Remove real file
+        $resp = true;
+        if (!$preserve) {
+            if ($file->isFile()) {
+                $resp = @unlink($file->getRealpath());
+            } else {
+                $resp = @rmdir($file->getRealpath());
             }
         }
         return $resp;
@@ -59,6 +72,24 @@ class driverFileManager {
         $node = driverCommand::run('getNodes', array(
             'nodetype' => 'file',
             'where' => '`path` = \''.$path.'\'',
+        ));
+        
+        foreach($node as $f) {
+            return new driverFileManagerFile((object) $f);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get file or folder by id
+     * @param integer $id
+     * @return \driverFileManagerFile
+     */
+    public static function getById($id) {
+        $node = driverCommand::run('getNode', array(
+            'nodetype' => 'file',
+            'node' => $id,
         ));
         
         foreach($node as $f) {
@@ -254,31 +285,101 @@ class driverFileManagerFile {
     
     /**
      * Remove a file or folder
-     * @param string $name File or folder name to remove
+     * @param string/driverFileManagerFile $name File or folder to remove
      * @param boolean $recursive Delete childs recursively. If is a folder and not empty, remove content?
+     * @return boolean TRUE if Ok.
      */
     public function rm($name, $recursive = false) {
-        driverFileManager::clearName($name);
-        var_dump($this->getChilds(false));
+        if (!is_a($name, 'driverFileManagerFile')) {
+            driverFileManager::clearName($name);
+            $child = $this->getChilds($name, false);
+            if (count($child) == 0) {
+                return false;
+            } else {
+                $child = $child[0];
+            }
+        } else {
+            $child = $name;
+            // I only can remove my childs.
+            if ($child->getParent() != $this->id) {
+                return false;
+            }
+        }
+        $subChildsCnt = $child->getChildsCount(false);
+        if ($subChildsCnt > 0) {
+            if (!$recursive) {
+                return false;
+            } else {
+                // I get childs that the user can see
+                $subChilds = $child->getChilds('*', true);
+                foreach($subChilds as $subChild) {
+                    // Childs can be files or folders
+                    $resp = $child->rm($subChild, $recursive);
+                    if (!$resp) return false;
+                }
+                // At the end, if I have childs then I cant erase it.
+                $subChildsCnt = $child->getChildsCount(false);
+                if ($subChildsCnt > 0) {
+                    return false;
+                }
+            }
+        }
+        return driverFileManager::rmFileEntity($child);
     }
     
     // Getters and Setters
+    
+    /**
+     * Return amount of childs
+     * @param boolean $secured Default TRUE, it only must be used by programmatic calls
+     * @return integer
+     */
+    public function getChildsCount($secured = true) {
+        $node = driverNodes::getNodes(array(
+            'nodetype' => 'file',
+            'count' => 1,
+            'where' => '`parent` = '.$this->getId(),
+        ), $secured);
+        return $node[0]['amount'];
+    }
     
     /**
      * Return child files and folders
      * @param boolean $secured Default TRUE, it only must be used by programmatic calls
      * @return array of type driverFileManagerFile
      */
-    public function getChilds($secured = true) {
+    public function getChilds($pattern = "*", $secured = true) {
         $node = driverNodes::getNodes(array(
             'nodetype' => 'file',
             'where' => '`parent` = '.$this->getId(),
         ), $secured);
         $resp = array();
-        foreach($node as $key=>$file) {
-            $resp[] = new driverFileManagerFile((object) $file);
+        foreach($node as $key => $file) {
+            $eFile = new driverFileManagerFile((object) $file);
+            if (fnmatch($pattern, $eFile->getName())) {
+                $resp[] = $eFile;
+            }
         }
         return $resp;
+    }
+    
+    /**
+     * @return string File name
+     */
+    public function getName() {
+        $path = $this->getPath();
+        if ($this->isFolder()) {
+            if (driverTools::str_end("/", $path)) {
+                $path = substr($path, 0, strlen($path) - 1);
+            }
+        }
+        $fInfo = driverTools::pathInfo($path);
+        return $fInfo['filename'];
+    }
+    
+    public function getParentPath() {
+        $resp = $this->getParentEntity();
+        return $resp->getPath();
     }
     
     /**
@@ -319,6 +420,13 @@ class driverFileManagerFile {
         return $this->path;
     }
 
+    /**
+     * @return driverFileManagerFile
+     */
+    public function getParentEntity() {
+        return driverFileManager::getById($this->parent);
+    }
+    
     public function getParent() {
         return $this->parent;
     }

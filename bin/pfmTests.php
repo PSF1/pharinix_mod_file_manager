@@ -188,6 +188,14 @@ if (!class_exists("commandPfmTests")) {
             $fLevel3 = $fLevel2->makeDir('level 3');
             // Delete from root
             $rootFolder->rm('level 1', true);
+            $childs = $rootFolder->getChilds('level 1');
+            if (count($childs) > 0) {
+                echo self::getFail(__('Level 1 exist yet.'));
+            } else {
+                echo self::getSuccess(__('Ok'));
+            }
+            driverFileManager::rm('/pfm_test/');
+            
             
             // END: We need clear system
             // TODO: Delete nodes
@@ -256,9 +264,9 @@ EOT;
             return parent::getAccess($me);
         }
         
-//        public static function getAccessFlags() {
-//            return driverUser::PERMISSION_FILE_ALL_EXECUTE;
-//        }
+        public static function getAccessFlags() {
+            return driverUser::PERMISSION_FILE_ALL_EXECUTE;
+        }
     }
 }
 return new commandPfmTests();

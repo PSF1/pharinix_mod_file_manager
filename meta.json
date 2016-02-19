@@ -89,6 +89,18 @@
                 "nodetype":"file",
                 "name":"title"
             }
+        },
+        {"chownNode":
+            {
+                "nodetype":"file",
+                "group":"user"
+            }
+        },
+        {"chmodNode":
+            {
+                "nodetype":"file",
+                "flags":"4084"
+            }
         }
     ],
     "uninstall": [],
