@@ -87,6 +87,7 @@ class driverFileManager {
                     'nodetype' => 'file',
                     'isfolder' => 1,
                     'path' => '/' . $name . '/',
+                    'mimetype' => 'inode/directory',
                     'realpath' => $path
                 );
                 $nresp = driverCommand::run('addNode', $params);
@@ -96,7 +97,7 @@ class driverFileManager {
                     $preResp->path = $params['path'];
                     $preResp->realpath = $params['realpath'];
     //                $preResp->parent = $params['parent'];
-                    // $preResp->mimetype = $params['mimetype'];
+                    $preResp->mimetype = $params['mimetype'];
                     $preResp->id = $nresp['nid'];
                     $resp = new driverFileManagerFile($preResp);
                 }
@@ -233,7 +234,7 @@ class driverFileManagerFile {
                     'path' => $this->path.$name.'/',
                     'realpath' => $this->realpath.$name.'/',
                     'parent' => $this->id,
-                    //'mimetype' => $this->mimetype
+                    'mimetype' => 'inode/directory'
                 );
                 $nresp = driverCommand::run('addNode', $params);
                 if ($nresp['ok']) {
@@ -242,7 +243,7 @@ class driverFileManagerFile {
                     $preResp->path = $params['path'];
                     $preResp->realpath = $params['realpath'];
                     $preResp->parent = $params['parent'];
-    //                $preResp->mimetype = $params['mimetype'];
+                    $preResp->mimetype = $params['mimetype'];
                     $preResp->id = $nresp['nid'];
                     $resp = new driverFileManagerFile($preResp);
                 }
@@ -254,14 +255,31 @@ class driverFileManagerFile {
     /**
      * Remove a file or folder
      * @param string $name File or folder name to remove
-     * @param boolean $recursive If is a folder and not empty, remove content?
+     * @param boolean $recursive Delete childs recursively. If is a folder and not empty, remove content?
      */
     public function rm($name, $recursive = false) {
         driverFileManager::clearName($name);
-        
+        var_dump($this->getChilds(false));
     }
     
     // Getters and Setters
+    
+    /**
+     * Return child files and folders
+     * @param boolean $secured Default TRUE, it only must be used by programmatic calls
+     * @return array of type driverFileManagerFile
+     */
+    public function getChilds($secured = true) {
+        $node = driverNodes::getNodes(array(
+            'nodetype' => 'file',
+            'where' => '`parent` = '.$this->getId(),
+        ), $secured);
+        $resp = array();
+        foreach($node as $key=>$file) {
+            $resp[] = new driverFileManagerFile((object) $file);
+        }
+        return $resp;
+    }
     
     /**
      * Get file size

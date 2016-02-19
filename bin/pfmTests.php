@@ -98,6 +98,62 @@ if (!class_exists("commandPfmTests")) {
                 echo self::getFail(__('Real folder of \'/pfm_test/level 1/\' it\'s not created (\'var/pfm_test/level 1/\').'));
             }
             
+            echo self::getLegend(__('Adding a 2nd & 3nd level folder'));
+            $fLevel2 = $fLevel1->makeDir('level 2');
+            if ($fLevel2 == null) {
+                echo self::getFail(__('I can\'t make \'/pfm_test/level 1/level 2/\' folder'));
+            } else if(is_dir('var/pfm_test/level 1/level 2/')) {
+                echo self::getSuccess(__('2nd Ok'));
+                if (!$fLevel2->isRootFolder()) {
+                    echo self::getSuccess(__('Entity is NOT a root folder'));
+                } else {
+                    echo self::getFail(__('Entity is a root folder'));
+                }
+                if (!$fLevel2->isFolder()) {
+                    echo self::getFail(__('Entity is NOT a folder'));
+                } else {
+                    echo self::getSuccess(__('Entity is a folder'));
+                }
+            } else {
+                echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/\' it\'s not created (\'var/pfm_test/level 1/level 2/\').'));
+            }
+            $fLevel3 = $fLevel2->makeDir('level 3');
+            if ($fLevel3 == null) {
+                echo self::getFail(__('I can\'t make \'/pfm_test/level 1/level 2/level 3/\' folder'));
+            } else if(is_dir('var/pfm_test/level 1/level 2/level 3/')) {
+                echo self::getSuccess(__('3nd Ok'));
+                if (!$fLevel3->isRootFolder()) {
+                    echo self::getSuccess(__('Entity is NOT a root folder'));
+                } else {
+                    echo self::getFail(__('Entity is a root folder'));
+                }
+                if (!$fLevel3->isFolder()) {
+                    echo self::getFail(__('Entity is NOT a folder'));
+                } else {
+                    echo self::getSuccess(__('Entity is a folder'));
+                }
+            } else {
+                echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/level 3/\' it\'s not created (\'var/pfm_test/level 1/level 2/level 3/\').'));
+            }
+            
+            echo self::getLegend(__('Delete empty 3nd & 2nd level folder'));
+            $resp = driverFileManager::rm('/pfm_test/level 1/level 2/level 3/');
+            if (!$resp) {
+                echo self::getFail(__('I can\'t remove \'/pfm_test/level 1/level 2/level 3/\' folder'));
+            } else if(is_dir('var/pfm_test/level 1/level 2/level 3/')) {
+                echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/level 3/\' it\'s not removed (\'var/pfm_test/level 1/level 2/level 3/\').'));
+            } else {
+                echo self::getSuccess(__('3nd Ok'));
+            }
+            $resp = driverFileManager::rm('/pfm_test/level 1/level 2/');
+            if (!$resp) {
+                echo self::getFail(__('I can\'t remove \'/pfm_test/level 1/level 2/\' folder'));
+            } else if(is_dir('var/pfm_test/level 1/level 2/')) {
+                echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/\' it\'s not removed (\'var/pfm_test/level 1/level 2/\').'));
+            } else {
+                echo self::getSuccess(__('2nd Ok'));
+            }
+            
             echo self::getLegend(__('Delete empty 1st level folder'));
             $resp = driverFileManager::rm('/pfm_test/level 1/');
             if (!$resp) {
@@ -117,6 +173,21 @@ if (!class_exists("commandPfmTests")) {
             } else {
                 echo self::getSuccess(__('Ok'));
             }
+            
+            echo self::getLegend(__('Delete multilevel folder'));
+            if (!is_dir('var/pfm_test/')) {
+                if (!@mkdir('var/pfm_test/')) {
+                    echo self::getFail(__('I can\'t make \'var/pfm_test/\' folder'));
+                }
+            }
+            // Make test structure
+            $resp = driverFileManager::mount('var/pfm_test/', '/pfm_test/');
+            $rootFolder = driverFileManager::getByPath('/pfm_test/');
+            $fLevel1 = $rootFolder->makeDir('level 1');
+            $fLevel2 = $fLevel1->makeDir('level 2');
+            $fLevel3 = $fLevel2->makeDir('level 3');
+            // Delete from root
+            $rootFolder->rm('level 1', true);
             
             // END: We need clear system
             // TODO: Delete nodes
