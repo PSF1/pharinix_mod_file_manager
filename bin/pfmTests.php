@@ -98,7 +98,7 @@ if (!class_exists("commandPfmTests")) {
                 echo self::getFail(__('Real folder of \'/pfm_test/level 1/\' it\'s not created (\'var/pfm_test/level 1/\').'));
             }
             
-            echo self::getLegend(__('Adding a 2nd & 3nd level folder'));
+            echo self::getLegend(__('Adding a 2nd & 3st level folder'));
             $fLevel2 = $fLevel1->makeDir('level 2');
             if ($fLevel2 == null) {
                 echo self::getFail(__('I can\'t make \'/pfm_test/level 1/level 2/\' folder'));
@@ -121,7 +121,7 @@ if (!class_exists("commandPfmTests")) {
             if ($fLevel3 == null) {
                 echo self::getFail(__('I can\'t make \'/pfm_test/level 1/level 2/level 3/\' folder'));
             } else if(is_dir('var/pfm_test/level 1/level 2/level 3/')) {
-                echo self::getSuccess(__('3nd Ok'));
+                echo self::getSuccess(__('3st Ok'));
                 if (!$fLevel3->isRootFolder()) {
                     echo self::getSuccess(__('Entity is NOT a root folder'));
                 } else {
@@ -136,14 +136,14 @@ if (!class_exists("commandPfmTests")) {
                 echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/level 3/\' it\'s not created (\'var/pfm_test/level 1/level 2/level 3/\').'));
             }
             
-            echo self::getLegend(__('Delete empty 3nd & 2nd level folder'));
+            echo self::getLegend(__('Delete empty 3st & 2nd level folder'));
             $resp = driverFileManager::rm('/pfm_test/level 1/level 2/level 3/');
             if (!$resp) {
                 echo self::getFail(__('I can\'t remove \'/pfm_test/level 1/level 2/level 3/\' folder'));
             } else if(is_dir('var/pfm_test/level 1/level 2/level 3/')) {
                 echo self::getFail(__('Real folder of \'/pfm_test/level 1/level 2/level 3/\' it\'s not removed (\'var/pfm_test/level 1/level 2/level 3/\').'));
             } else {
-                echo self::getSuccess(__('3nd Ok'));
+                echo self::getSuccess(__('3st Ok'));
             }
             $resp = driverFileManager::rm('/pfm_test/level 1/level 2/');
             if (!$resp) {
@@ -194,17 +194,39 @@ if (!class_exists("commandPfmTests")) {
             } else {
                 echo self::getSuccess(__('Ok'));
             }
+            
+            echo self::getLegend(__('Add file'));
+            $rootFolder = driverFileManager::getByPath('/pfm_test/');
+            $file = $rootFolder->getFile('test.txt', true);
+            if ($file === false) {
+                echo self::getFail(__('I cant create test.txt file.'));
+            } else {
+                echo self::getSuccess(__('Ok'));
+            }
+            $rootFolder->rm($file);
             driverFileManager::rm('/pfm_test/');
             
+            echo self::getLegend(__('Test driverFileManager::getMimeByExt'));
+            $resp = driverFileManager::getMimeByExt('hi.txt');
+            if ($resp == 'text/plain') {
+                echo self::getSuccess(__('Ok').': text/plain');
+            } else {
+                echo self::getFail(__('Fails').': text/plain');
+            }
+            $resp = driverFileManager::getMimeByExt('hi.mp4');
+            if ($resp == 'video/mp4') {
+                echo self::getSuccess(__('Ok').': video/mp4');
+            } else {
+                echo self::getFail(__('Fails').': video/mp4');
+            }
+            $resp = driverFileManager::getMimeByExt('hi.wav');
+            if ($resp == 'audio/x-wav') {
+                echo self::getSuccess(__('Ok').': audio/x-wav');
+            } else {
+                echo self::getFail(__('Fails').': audio/x-wav');
+            }
             
-            // END: We need clear system
-            // TODO: Delete nodes
-            
-            // Delete test folder
-//            if (!@rmdir('var/pfm_test/')) {
-//                echo self::getFail(__('I can\'t remove \'var/pfm_test/\' folder'));
-//                return;
-//            }
+            // END: The system must be clean
             
             $final = self::getLegend(sprintf(__('Executed %s tests OK, and %s FAILS.'), self::$cntOk, self::$cntFail));
             echo '<div class="well">';

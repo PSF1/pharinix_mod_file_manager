@@ -79,6 +79,32 @@
                 "default":"application/octet-stream",
                 "label":"Mime type",
                 "help":"The suggested mime type, usually it's given by the uploader."
+            },
+            "meta":{
+                "type":"longtext",
+                "iskey":false,
+                "length":0,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"{}",
+                "label":"Metadata",
+                "help":"JSON Metadata."
+            },
+            "state":{
+                "type":"string",
+                "iskey":false,
+                "length":250,
+                "required":false,
+                "locked":false,
+                "readOnly":false,
+                "system":false,
+                "multivalued":false,
+                "default":"0",
+                "label":"State",
+                "help":"File state: 0 - Close, 1 - Open."
             }
         }
     },

@@ -8,6 +8,11 @@
  */
 
 class driverFileManager {
+    /**
+     * Knowed mime types cache
+     * @var array 
+     */
+    public static $mimeTypes = array();
     
     /**
      * Remove a file or folder
@@ -141,6 +146,51 @@ class driverFileManager {
         $name = str_replace('/', '', $name);
         $name = str_replace('\\', '', $name);
     }
+    
+    /**
+     * @see http://php.net/manual/es/function.mime-content-type.php#107798
+     */
+    public static function mimeTypesUpdate() {
+        $url = 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types';
+        $modPath = driverCommand::getModPath('pharinix_mod_file_manager');
+        @file_put_contents($modPath.'assets/mimetypes.txt', @file_get_contents($url));
+        self::$mimeTypes = array();
+    }
+
+    public static function getMimeTypes() {
+        if (count(self::$mimeTypes) == 0) {
+            $s = array();
+            $modPath = driverCommand::getModPath('pharinix_mod_file_manager');
+            $lines = @explode("\n", @file_get_contents($modPath.'assets/mimetypes.txt'));
+            foreach ($lines as $x)
+                if (isset($x[0]) && 
+                    $x[0] !== '#' && 
+                    preg_match_all('#([^\s]+)#', $x, $out) && 
+                    isset($out[1]) && 
+                    ($c = count($out[1])) > 1) {
+                        for ($i = 1; $i < $c; $i++) {
+                            $s[$out[1][$i]] = $out[1][0];
+                        }
+                    }
+            return $s;
+        }
+        
+        return self::$mimeTypes;
+    }
+    
+    /**
+     * Get mime type by file extension
+     * @param string $name File name
+     * @return string Mime type
+     */
+    public static function getMimeByExt($name) {
+        $types = self::getMimeTypes();
+        $fInfo = driverTools::pathInfo($name);
+        if (isset($types[$fInfo['ext']])) {
+            return $types[$fInfo['ext']];
+        }
+        return "application/octet-stream";
+    }
 }
 
 /**
@@ -173,6 +223,8 @@ class driverFileManagerFile {
      */
     protected $mimetype = "application/octet-stream";
     
+    protected $resource = null;
+    
     /**
      * If $std is defined try to import data from it
      * @param stdClass $std
@@ -193,6 +245,89 @@ class driverFileManagerFile {
     }
     
     /**
+     * Get file entity or create it if dont exist.
+     * @param string $name File name
+     * @param boolean $create Create if dont exist?
+     * @return driverFileManagerFile File entity or FALSE if fail.
+     */
+    public function getFile($name, $create = false) {
+        if($this->isFile()) return false;
+        driverFileManager::clearName($name);
+        
+        $files = $this->getChilds($name);
+        if (count($files) > 0) {
+            foreach($files as $file) {
+                return $file;
+            }
+        }
+        if ($create) {
+            $params = array(
+                'nodetype' => 'file',
+                'isfolder' => false,
+                'path' => $this->path . $name,
+                'realpath' => $this->realpath . $name,
+                'parent' => $this->id,
+                'mimetype' => driverFileManager::getMimeByExt($name)
+            );
+            $nresp = driverCommand::run('addNode', $params);
+            $resp = false;
+            if ($nresp['ok']) {
+                $preResp = new stdClass();
+                $preResp->isfolder = $params['isfolder'];
+                $preResp->path = $params['path'];
+                $preResp->realpath = $params['realpath'];
+                $preResp->parent = $params['parent'];
+                $preResp->mimetype = $params['mimetype'];
+                $preResp->id = $nresp['nid'];
+                $resp = new driverFileManagerFile($preResp);
+                $resp->open('a+');
+                $resp->close();
+            }
+            return $resp;
+        }
+        return false;
+    }
+    
+    /**
+     * Open the file, and change state in data base.
+     * @param string $mode The mode parameter specifies the type of access you require to the stream.
+     * @see http://php.net/manual/en/function.fopen.php
+     * @return resource Returns a file pointer resource on success, or FALSE on error.
+     */
+    public function open($mode) {
+        if ($this->isFolder()) return false;
+        
+        $resp = driverCommand::run('updateNode', array(
+            'nodetype' => 'file',
+            'nid' => $this->id,
+            'state' => '1',
+        ));
+        if ($resp['ok']) {
+            $this->resource = @fopen($this->realpath, $mode);
+            return $this->resource;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * Close the file, and change state in data base.
+     * @return boolean 
+     */
+    public function close() {
+        if ($this->isFolder()) return false;
+        $resp = driverCommand::run('updateNode', array(
+            'nodetype' => 'file',
+            'nid' => $this->id,
+            'state' => '0',
+        ));
+        $resp = @fclose($this->resource);
+        $this->resource = null;
+        
+        return $resp;
+    }
+    
+    /**
      * Update data base record
      * @return boolean
      */
@@ -202,7 +337,7 @@ class driverFileManagerFile {
             $resp = driverCommand::run('updateNode', array(
                 'nodetype' => 'file',
                 'nid' => $this->id,
-                'isfolder' => $this->_isfolder,
+                'isfolder' => ($this->_isfolder == '1'),
                 'path' => $this->path,
                 'realpath' => $this->realpath,
                 'parent' => $this->parent,
@@ -261,7 +396,7 @@ class driverFileManagerFile {
             if (@mkdir($this->realpath.$name.'/')) {
                 $params = array(
                     'nodetype' => 'file',
-                    'isfolder' => 1,
+                    'isfolder' => true,
                     'path' => $this->path.$name.'/',
                     'realpath' => $this->realpath.$name.'/',
                     'parent' => $this->id,
@@ -345,6 +480,7 @@ class driverFileManagerFile {
     
     /**
      * Return child files and folders
+     * @param string $pattern Filter pattern
      * @param boolean $secured Default TRUE, it only must be used by programmatic calls
      * @return array of type driverFileManagerFile
      */
