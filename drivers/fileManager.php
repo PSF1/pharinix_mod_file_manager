@@ -555,6 +555,18 @@ class driverFileManagerFile {
     public function getPath() {
         return $this->path;
     }
+    
+    /**
+     * Get download URL
+     * @return string Download URL, or empty string if is a folder.
+     */
+    public function getDownloadPath() {
+        if ($this->isFile()) {
+            return CMS_DEFAULT_URL_BASE.'?command=pfmDownload&path='.urlencode($this->getPath()).'&interface=nothing';
+        } else {
+            return '';
+        }
+    }
 
     /**
      * @return driverFileManagerFile
