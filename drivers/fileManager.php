@@ -191,6 +191,15 @@ class driverFileManager {
         }
         return "application/octet-stream";
     }
+    
+    /**
+     * Verify if a URL is from file manager module.
+     * @param string $url
+     * @return boolean
+     */
+    public static function isFileManagerDownloadURL($url) {
+        return (stripos($url, 'pfmDownload') !== false);
+    }
 }
 
 /**
@@ -567,7 +576,7 @@ class driverFileManagerFile {
             return '';
         }
     }
-
+    
     /**
      * @return driverFileManagerFile
      */
