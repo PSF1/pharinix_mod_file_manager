@@ -8,6 +8,10 @@
  */
 
 class driverFileManager {
+    const CHANGECRUD_OWNER = 8;
+    const CHANGECRUD_GROUP = 4;
+    const CHANGECRUD_ALL = 0;
+    
     /**
      * Knowed mime types cache
      * @var array 
@@ -381,6 +385,60 @@ class driverFileManagerFile {
     }
     
     // Methods
+    
+    /**
+     * Change file owner or/and owner group
+     * 
+     * @param string $owner Mail of the user or ID of the new owner. If it's null, or it is not set, command don't change it, to set to root you must value how 0, zero.
+     * @param type $group Title or ID of the group. If it's null, or it is not set, command don't change it, to set to root you must value how 0, zero.
+     * @return array
+     */
+    public function chOwn($owner = null, $group = null) {
+        return driverCommand::run('chownNode', array(
+            'nodetype' => 'file',
+            'nid' => $this->id,
+            'owner' => $owner,
+            'group' => $group,
+        ));
+    }
+    
+    /**
+     * Change permission
+     * 
+     * @param integer $flags Integer with the new permissions.
+     * @return array
+     */
+    public function chMod($flags) {
+        return driverCommand::run('chmodNode', array(
+            'nodetype' => 'file',
+            'nid' => $this->id,
+            'flags' => $flags,
+        ));
+    }
+    
+    
+    public function changeCRUD($segment, $create, $read, $update, $delete) {
+        $me = driverCommand::run('getNodes', array(
+            'nodetype' => 'file',
+            'fields' => '`access`',
+            'where' => '`id` = '.$this->id,
+        ));
+        $ncrud = decbin($me[$this->id]['access']);
+        $require = ($create?1:0).($read?1:0).($update?1:0).($delete?1:0);
+        switch ($segment) {
+            case driverFileManager::CHANGECRUD_ALL:
+                $require = substr($ncrud, 0, 8).$require;
+                break;
+            case driverFileManager::CHANGECRUD_GROUP:
+                $require = substr($ncrud, 0, 4).$require.substr($ncrud, 8);
+                break;
+            case driverFileManager::CHANGECRUD_OWNER:
+                $require = $require.substr($ncrud, 4);
+                break;
+        }
+        $require = bindec($require);
+        return $this->chMod($require);
+    }
     
     /**
      * Make a new folder
