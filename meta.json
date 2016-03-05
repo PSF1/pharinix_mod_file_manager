@@ -131,7 +131,7 @@
     ],
     "uninstall": [],
     "requirements": {
-        "pharinix": "2.01.x"
+        "pharinix": "2.03.x"
     },
     "platforms":[
         "win",
