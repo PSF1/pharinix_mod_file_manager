@@ -69,6 +69,24 @@ class driverFileManager {
     }
     
     /**
+     * Get list of root folders
+     * @return \driverFileManagerFile
+     */
+    public static function getRoots() {
+        $node = driverCommand::run('getNodes', array(
+            'nodetype' => 'file',
+            'where' => '`parent` = 0',
+        ));
+        
+        $resp = array();
+        foreach($node as $f) {
+            $resp[] = new driverFileManagerFile((object) $f);
+        }
+        
+        return $resp;
+    }
+    
+    /**
      * Get a file or folder instance by path
      * @param string $path Virtual file or folder path
      * @return \driverFileManagerFile File or folder instance, or null if not found
