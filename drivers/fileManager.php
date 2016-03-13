@@ -276,7 +276,7 @@ class driverFileManagerFile {
     }
     
     /**
-     * Create a file entity and create it if dont exist.
+     * Create a file entity or return it if exist.
      * @param string $name File name
      * @return driverFileManagerFile File entity or FALSE if fail.
      */
