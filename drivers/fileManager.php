@@ -276,6 +276,15 @@ class driverFileManagerFile {
     }
     
     /**
+     * Create a file entity and create it if dont exist.
+     * @param string $name File name
+     * @return driverFileManagerFile File entity or FALSE if fail.
+     */
+    public function createFile($name) {
+        return $this->getFile($name, true);
+    }
+    
+    /**
      * Get file entity or create it if dont exist.
      * @param string $name File name
      * @param boolean $create Create if dont exist?
