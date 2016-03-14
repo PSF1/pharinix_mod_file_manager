@@ -222,6 +222,51 @@ class driverFileManager {
     public static function isFileManagerDownloadURL($url) {
         return (stripos($url, 'pfmDownload') !== false);
     }
+    
+    /**
+     * Determines the maximum file upload size by querying the PHP settings.
+     * 
+     * @source https://api.drupal.org/api/drupal/core%21includes%21file.inc/function/file_upload_max_size/8
+     * @staticvar integer $max_size Cached upload limit
+     * @return integer A file size limit in bytes based on the PHP upload_max_filesize and post_max_size
+     */
+    public static function file_upload_max_size() {
+        static $max_size = -1;
+
+        if ($max_size < 0) {
+            // Start with post_max_size.
+            $max_size = self::parseToBytes(ini_get('post_max_size'));
+
+            // If upload_max_size is less, then reduce. Except if upload_max_size is
+            // zero, which indicates no limit.
+            $upload_max = self::parseToBytes(ini_get('upload_max_filesize'));
+            if ($upload_max > 0 && $upload_max < $max_size) {
+                $max_size = $upload_max;
+            }
+        }
+        return $max_size;
+    }
+    
+    /**
+     * Parses a given byte size.
+     * @source https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Component%21Utility%21Bytes.php/function/Bytes%3A%3AtoInt/8
+     * @param mixed $size An integer or string size expressed as a number of bytes with optional SI or IEC binary unit prefix (e.g. 2, 3K, 5MB, 10G, 6GiB, 8 bytes, 9mbytes).
+     * @return integer An integer representation of the size in bytes.
+     */
+    public static function parseToBytes($size) {
+        // Remove the non-unit characters from the size.
+        $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
+        // Remove the non-numeric characters from the size.
+        $size = preg_replace('/[^0-9\.]/', '', $size);
+        if ($unit) {
+            // Find the position of the unit in the ordered string which is the power
+            // of magnitude to multiply a kilobyte by.
+            return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
+        } else {
+            return round($size);
+        }
+    }
+
 }
 
 /**
