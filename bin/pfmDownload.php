@@ -81,8 +81,7 @@ if (!class_exists("commandPfmDownload")) {
 //                header("Content-Disposition: $contentDisposition;
 //                    filename=\"$fileName\"");
 //            }
-            header("Content-Disposition: $contentDisposition;
-                    filename=\"{$file->getName()}\"");
+            header("Content-Disposition: $contentDisposition;filename=\"{$file->getName()}\"");
 
             header("Accept-Ranges: bytes");
             $range = 0;
