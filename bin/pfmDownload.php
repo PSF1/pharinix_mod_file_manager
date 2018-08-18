@@ -105,7 +105,6 @@ if (!class_exists("commandPfmDownload")) {
             if ($size == 0) {
                 die('Zero byte file! Aborting download');
             }
-            set_magic_quotes_runtime(0);
             $fp = fopen($file->getRealpath(), "rb");
 
             fseek($fp, str_replace('-', '', $range));
